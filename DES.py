@@ -49,7 +49,6 @@ def decrypt_file(file_path, key):
 
     return decrypted_file_path
 
-
 # GUI 界面
 def select_file_and_encrypt():
     file_path = filedialog.askopenfilename(title="选择文件进行加密")
@@ -80,19 +79,23 @@ def generate_prime_number():
 def save_prime():
     prime = prime_display.get(1.0, tk.END).strip()
     if prime:
-        with open("prime.txt", "w") as file:
-            file.write(prime)
-        messagebox.showinfo("保存成功", "素数已保存到 prime.txt")
+        file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")], title="选择保存位置")
+        if file_path:
+            with open(file_path, "w") as file:
+                file.write(prime)
+            messagebox.showinfo("保存成功", f"素数已保存到 {file_path}")
 
 def load_prime():
-    try:
-        with open("prime.txt", "r") as file:
-            prime = file.read().strip()
+    file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")], title="选择读取素数文件")
+    if file_path:
+        try:
+            with open(file_path, "r") as file:
+                prime = file.read().strip()
             prime_display.delete(1.0, tk.END)
             prime_display.insert(tk.END, prime)
-        messagebox.showinfo("加载成功", "素数已从文件加载")
-    except FileNotFoundError:
-        messagebox.showerror("文件未找到", "未找到 prime.txt 文件")
+            messagebox.showinfo("加载成功", f"素数已从文件加载：{file_path}")
+        except FileNotFoundError:
+            messagebox.showerror("文件未找到", "未找到指定的文件")
 
 # 创建主界面
 root = tk.Tk()
