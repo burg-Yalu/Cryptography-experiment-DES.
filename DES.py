@@ -14,14 +14,15 @@ def generate_large_prime(bits=300):
 # DES 加密
 def des_encrypt(key, data):
     cipher = DES.new(key, DES.MODE_CBC)
-    ciphertext = cipher.encrypt(pad(data.encode(), DES.block_size))
+    padded_data = pad(data.encode(), DES.block_size)  # 确保数据填充到8的倍数
+    ciphertext = cipher.encrypt(padded_data)
     return cipher.iv + ciphertext  # 前8字节是初始化向量
 
 # DES 解密
 def des_decrypt(key, encrypted_data):
     iv = encrypted_data[:8]  # 前8字节为初始化向量
     cipher = DES.new(key, DES.MODE_CBC, iv)
-    decrypted_data = unpad(cipher.decrypt(encrypted_data[8:]), DES.block_size)
+    decrypted_data = unpad(cipher.decrypt(encrypted_data[8:]), DES.block_size)  # 去除填充
     return decrypted_data.decode()
 
 # 文件加密
@@ -39,10 +40,15 @@ def decrypt_file(file_path, key):
     with open(file_path, 'rb') as file:
         encrypted_data = file.read()
     decrypted_data = des_decrypt(key, encrypted_data)
-    decrypted_file_path = file_path.replace('.enc', '.dec')
+
+    # 解密后恢复原文件名 (去掉 `.enc` 后缀)
+    decrypted_file_path = file_path.rsplit('.', 1)[0]  # 去掉文件扩展名 (.enc)
+
     with open(decrypted_file_path, 'wb') as dec_file:
         dec_file.write(decrypted_data.encode())
+
     return decrypted_file_path
+
 
 # GUI 界面
 def select_file_and_encrypt():
@@ -50,14 +56,20 @@ def select_file_and_encrypt():
     if file_path:
         key = os.urandom(8)  # 生成一个8字节的随机DES密钥
         encrypted_file_path = encrypt_file(file_path, key)
-        messagebox.showinfo("成功", f"文件加密成功，保存为：{encrypted_file_path}")
+        # 保存密钥到文件
+        with open(encrypted_file_path + '.key', 'wb') as key_file:
+            key_file.write(key)
+        messagebox.showinfo("成功", f"文件加密成功，保存为：{encrypted_file_path} 和密钥文件：{encrypted_file_path + '.key'}")
 
 def select_file_and_decrypt():
     file_path = filedialog.askopenfilename(title="选择文件进行解密")
     if file_path:
-        key = os.urandom(8)  # 生成一个8字节的随机DES密钥
-        decrypted_file_path = decrypt_file(file_path, key)
-        messagebox.showinfo("成功", f"文件解密成功，保存为：{decrypted_file_path}")
+        key_file_path = filedialog.askopenfilename(title="选择密钥文件", filetypes=[("Key Files", "*.key")])
+        if key_file_path:
+            with open(key_file_path, 'rb') as key_file:
+                key = key_file.read()
+            decrypted_file_path = decrypt_file(file_path, key)
+            messagebox.showinfo("成功", f"文件解密成功，保存为：{decrypted_file_path}")
 
 def generate_prime_number():
     prime_length = int(prime_length_entry.get())
