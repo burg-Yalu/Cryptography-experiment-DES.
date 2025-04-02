@@ -16,16 +16,16 @@ def generate_large_prime(bits=300):
 
 # DES 加密（使用 ECB 模式）
 def des_encrypt(key, data):
-    cipher = DES.new(key, DES.MODE_ECB)  # 使用 ECB 模式
-    padded_data = pad(data.encode(), DES.block_size)  # 确保数据填充到8的倍数
+    cipher = DES.new(key, DES.MODE_ECB)
+    padded_data = pad(data.encode(), DES.block_size)
     ciphertext = cipher.encrypt(padded_data)
     return ciphertext
 
 
 # DES 解密（使用 ECB 模式）
 def des_decrypt(key, encrypted_data):
-    cipher = DES.new(key, DES.MODE_ECB)  # 使用 ECB 模式
-    decrypted_data = unpad(cipher.decrypt(encrypted_data), DES.block_size)  # 去除填充
+    cipher = DES.new(key, DES.MODE_ECB)
+    decrypted_data = unpad(cipher.decrypt(encrypted_data), DES.block_size)
     return decrypted_data.decode()
 
 
@@ -46,8 +46,7 @@ def decrypt_file(file_path, key):
         encrypted_data = file.read()
     decrypted_data = des_decrypt(key, encrypted_data)
 
-    # 解密后恢复原文件名 (去掉 `.enc` 后缀)
-    decrypted_file_path = file_path.rsplit('.', 1)[0]  # 去掉文件扩展名 (.enc)
+    decrypted_file_path = file_path.rsplit('.', 1)[0]
 
     with open(decrypted_file_path, 'wb') as dec_file:
         dec_file.write(decrypted_data.encode())
@@ -106,7 +105,7 @@ def decrypt_text():
 def select_file_and_encrypt():
     file_path = filedialog.askopenfilename(title="选择文件进行加密")
     if file_path:
-        key = os.urandom(8)  # 生成一个8字节的随机DES密钥
+        key = os.urandom(8)
         encrypted_file_path = encrypt_file(file_path, key)
         # 保存密钥到文件
         with open(encrypted_file_path + '.key', 'wb') as key_file:
