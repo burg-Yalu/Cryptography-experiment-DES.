@@ -14,19 +14,18 @@ def generate_large_prime(bits=300):
     return prime
 
 
-# DES 加密
+# DES 加密（使用 ECB 模式）
 def des_encrypt(key, data):
-    cipher = DES.new(key, DES.MODE_CBC)
+    cipher = DES.new(key, DES.MODE_ECB)  # 使用 ECB 模式
     padded_data = pad(data.encode(), DES.block_size)  # 确保数据填充到8的倍数
     ciphertext = cipher.encrypt(padded_data)
-    return cipher.iv + ciphertext  # 前8字节是初始化向量
+    return ciphertext
 
 
-# DES 解密
+# DES 解密（使用 ECB 模式）
 def des_decrypt(key, encrypted_data):
-    iv = encrypted_data[:8]  # 前8字节为初始化向量
-    cipher = DES.new(key, DES.MODE_CBC, iv)
-    decrypted_data = unpad(cipher.decrypt(encrypted_data[8:]), DES.block_size)  # 去除填充
+    cipher = DES.new(key, DES.MODE_ECB)  # 使用 ECB 模式
+    decrypted_data = unpad(cipher.decrypt(encrypted_data), DES.block_size)  # 去除填充
     return decrypted_data.decode()
 
 
@@ -66,33 +65,6 @@ def compress_folder(folder_path):
 # 解压文件夹
 def decompress_folder(zip_file_path, extract_to):
     shutil.unpack_archive(zip_file_path, extract_to)
-
-
-# 文件夹加密
-def encrypt_folder(folder_path, key):
-    # 将文件夹压缩为一个zip文件
-    zip_file_path = compress_folder(folder_path)
-    encrypted_data = des_encrypt(key, zip_file_path)
-    encrypted_folder_path = zip_file_path + '.enc'
-    with open(encrypted_folder_path, 'wb') as enc_file:
-        enc_file.write(encrypted_data)
-    return encrypted_folder_path
-
-
-# 文件夹解密
-def decrypt_folder(zip_file_path, key):
-    # 解密zip文件
-    with open(zip_file_path, 'rb') as file:
-        encrypted_data = file.read()
-    decrypted_data = des_decrypt(key, encrypted_data)
-
-    # 解密后保存文件
-    decrypted_zip_path = zip_file_path.rsplit('.', 1)[0]  # 去掉 .enc 后缀
-    with open(decrypted_zip_path, 'wb') as dec_file:
-        dec_file.write(decrypted_data.encode())
-
-    # 解压该zip文件
-    decompress_folder(decrypted_zip_path, os.path.dirname(zip_file_path))
 
 
 # 文本加密
@@ -154,32 +126,6 @@ def select_file_and_decrypt():
             messagebox.showinfo("成功", f"文件解密成功，保存为：{decrypted_file_path}")
 
 
-def select_folder_and_encrypt():
-    folder_path = filedialog.askdirectory(title="选择文件夹进行加密")
-    if folder_path:
-        key = os.urandom(8)  # 生成一个8字节的随机DES密钥
-        encrypted_folder_path = encrypt_folder(folder_path, key)
-        # 保存密钥到文件
-        with open(encrypted_folder_path + '.key', 'wb') as key_file:
-            key_file.write(key)
-        messagebox.showinfo("成功",
-                            f"文件夹加密成功，保存为：{encrypted_folder_path} 和密钥文件：{encrypted_folder_path + '.key'}")
-
-
-def select_folder_and_decrypt():
-    folder_path = filedialog.askdirectory(title="选择文件夹进行解密")
-    if folder_path:
-        zip_file_path = filedialog.askopenfilename(title="选择加密的文件夹压缩文件",
-                                                   filetypes=[("Encrypted Zip Files", "*.zip.enc")])
-        if zip_file_path:
-            key_file_path = filedialog.askopenfilename(title="选择密钥文件", filetypes=[("Key Files", "*.key")])
-            if key_file_path:
-                with open(key_file_path, 'rb') as key_file:
-                    key = key_file.read()
-                decrypt_folder(zip_file_path, key)
-                messagebox.showinfo("成功", f"文件夹解密成功，已解压到：{folder_path}")
-
-
 # 创建主界面
 root = tk.Tk()
 root.title("加解密与大素数生成软件")
@@ -192,12 +138,6 @@ encrypt_button.grid(row=0, column=0, padx=10, pady=10)
 
 decrypt_button = tk.Button(frame, text="选择文件解密", command=select_file_and_decrypt)
 decrypt_button.grid(row=0, column=1, padx=10, pady=10)
-
-encrypt_folder_button = tk.Button(frame, text="选择文件夹加密", command=select_folder_and_encrypt)
-encrypt_folder_button.grid(row=1, column=0, padx=10, pady=10)
-
-decrypt_folder_button = tk.Button(frame, text="选择文件夹解密", command=select_folder_and_decrypt)
-decrypt_folder_button.grid(row=1, column=1, padx=10, pady=10)
 
 # 添加文本加解密部分
 text_to_encrypt_label = tk.Label(frame, text="请输入待加密的文本：")
